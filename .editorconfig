@@ -11,6 +11,9 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+[*.{js,jsx,ts,tsx,html}]
+indent_size = 2
+
 [LICENSES/**.txt]
 trim_trailing_whitespace = false
 indent_style = space
