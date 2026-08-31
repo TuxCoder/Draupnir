@@ -83,7 +83,7 @@ export class FirstMessageIsImageProtection
   extends AbstractProtection<FirstMessageIsImageProtectionDescription>
   implements Protection<FirstMessageIsImageProtectionDescription>
 {
-  private justJoined: { [roomID: StringRoomID]: StringUserID[] } = {};
+  private justJoined: { [roomID: StringRoomID]: {user: StringUserID, time: number}[] } = {};
   private recentlyBanned: StringUserID[] = [];
 
   private readonly userConsequences: UserConsequences;
@@ -108,7 +108,7 @@ export class FirstMessageIsImageProtection
     if (!this.justJoined[roomID]) this.justJoined[roomID] = [];
     for (const change of changes) {
       if (change.membershipChangeType === MembershipChangeType.Joined) {
-        this.justJoined[roomID].push(change.userID);
+        this.justJoined[roomID].push({user: change.userID, time: Date.now()});
       }
     }
     return Ok(undefined);
@@ -133,7 +133,22 @@ export class FirstMessageIsImageProtection
         msgtype === "m.image" ||
         msgtype === "m.video" ||
         formattedBody.toLowerCase().includes("<img");
-      if (isMedia && this.justJoined[roomID].includes(event["sender"])) {
+      const coolDownTime = 10 * 60 * 1000; // 10 min
+      const coolDownDate = Date.now() - coolDownTime;
+      this.justJoined[roomID] = this.justJoined[roomID].filter(elem => {
+        if(elem.time < coolDownDate) {
+          LogService.info(
+            "FirstMessageIsImage",
+            `${event["sender"]} is no longer considered suspect`
+          );
+          return false;
+        }
+        return true;
+      });
+      const idx = this.justJoined[roomID].findIndex(
+              (elem) => elem.user == event["sender"]
+      );
+      if (isMedia && idx >= 0) {
         await this.draupnir.managementRoomOutput.logMessage(
           LogLevel.WARN,
           "FirstMessageIsImage",
@@ -176,15 +191,6 @@ export class FirstMessageIsImageProtection
           );
         }
       }
-    }
-
-    const idx = this.justJoined[roomID].indexOf(event["sender"]);
-    if (idx >= 0) {
-      LogService.info(
-        "FirstMessageIsImage",
-        `${event["sender"]} is no longer considered suspect`
-      );
-      this.justJoined[roomID].splice(idx, 1);
     }
     return Ok(undefined);
   }
