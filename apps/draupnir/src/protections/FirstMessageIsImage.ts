@@ -127,12 +127,21 @@ export class FirstMessageIsImageProtection
       const msgtype = event.content["msgtype"];
       const formattedBody =
         "formatted_body" in event.content
-          ? event.content["formatted_body"] || ""
+          ? event.content["formatted_body"] ||  ""
           : "";
+      const formattedBodyLower = formattedBody.toLowerCase();
+      const body = "body" in event.content
+        ? event.content["body"] ||  ""
+          : "";
+      const bodyLower = body.toLowerCase();
       const isMedia =
         msgtype === "m.image" ||
         msgtype === "m.video" ||
-        formattedBody.toLowerCase().includes("<img");
+        formattedBodyLower.includes("<img") ||
+        formattedBodyLower.includes("http://") ||
+        formattedBodyLower.includes("https://") ||
+        bodyLower.includes("http://") ||
+        bodyLower.includes("https://");
       const coolDownTime = 10 * 60 * 1000; // 10 min
       const coolDownDate = Date.now() - coolDownTime;
       this.justJoined[roomID] = this.justJoined[roomID].filter(elem => {
