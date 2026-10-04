@@ -25,6 +25,7 @@ import "./MentionLimitProtection";
 import "./MessageIsMedia";
 import "./MessageIsVoice";
 import "./NewJoinerProtection";
+import "./NewJoinerRegexProtection";
 import "./PolicyChangeNotification";
 import "./ProtectedRooms/RoomsSetBehaviourProtection";
 import "./TrustedReporters";
