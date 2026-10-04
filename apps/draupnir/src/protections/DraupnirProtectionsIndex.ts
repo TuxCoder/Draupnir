@@ -15,6 +15,7 @@ import "../capabilities/capabilityIndex";
 import "./BanPropagation";
 import "./BasicFlooding";
 import "./DraupnirNews/DraupnirNews";
+import "./EarlyMessageRegex";
 import "./FirstMessageIsImage";
 import "./HomeserverUserPolicyApplication/HomeserverUserPolicyProtection";
 import "./InvalidEventProtection";
