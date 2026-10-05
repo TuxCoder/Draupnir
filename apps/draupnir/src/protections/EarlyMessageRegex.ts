@@ -56,6 +56,10 @@ const EarlyMessageRegexProtectionSettings = Type.Object(
       uniqueItems: true,
       description: "The regex to match messages",
     }),
+    coolDownTime: Type.Integer({
+      default: 10 * 60, // 10 min
+      description: "CoolDownTime in seconds, duration of the active checks",
+    }),
   },
   { title: "EarlyMessageRegexProtectionSettings" }
 );
@@ -74,13 +78,14 @@ export class EarlyMessageRegexProtection
   extends AbstractProtection<EarlyMessageRegexProtectionDescription>
   implements Protection<EarlyMessageRegexProtectionDescription>
 {
-  private justJoined: { [roomID: StringRoomID]: {user: StringUserID, time: number}[] } = {};
+  private justJoined: { [roomID: StringRoomID]: {user: StringUserID, joinTime: number}[] } = {};
   private recentlyBanned: StringUserID[] = [];
 
   private readonly userConsequences: UserConsequences;
   private readonly eventConsequences: EventConsequences;
   private readonly disallowMedia: boolean;
   private readonly disallowList: RegExp[];
+  private readonly coolDownTime: number;
   constructor(
     description: EarlyMessageRegexProtectionDescription,
     lifetime: OwnLifetime<EarlyMessageRegexProtectionDescription>,
@@ -101,6 +106,7 @@ export class EarlyMessageRegexProtection
         return [];
       }
     });
+    this.coolDownTime = settings.coolDownTime;
   }
 
   public async handleMembershipChange(
@@ -111,7 +117,7 @@ export class EarlyMessageRegexProtection
     if (!this.justJoined[roomID]) this.justJoined[roomID] = [];
     for (const change of changes) {
       if (change.membershipChangeType === MembershipChangeType.Joined) {
-        this.justJoined[roomID].push({user: change.userID, time: Date.now()});
+        this.justJoined[roomID].push({user: change.userID, joinTime: Date.now()});
       }
     }
     return Ok(undefined);
@@ -127,10 +133,10 @@ export class EarlyMessageRegexProtection
       if (!("msgtype" in event.content)) {
         return Ok(undefined);
       }
-      const coolDownTime = 10 * 60 * 1000; // 10 min
+      const coolDownTime = this.coolDownTime * 1000; // convert to ms
       const coolDownDate = Date.now() - coolDownTime;
       this.justJoined[roomID] = this.justJoined[roomID].filter(elem => {
-        if(elem.time < coolDownDate) {
+        if(elem.joinTime < coolDownDate) {
           LogService.info(
             "EarlyMessageRegex",
             `${event["sender"]} is no longer considered suspect`
@@ -215,8 +221,9 @@ describeProtection<
 >({
   name: "EarlyMessageRegexProtection",
   description:
-    "If the first thing a user does after joining is to post an image or video, \
-    they'll be banned for spam. This does not publish the ban to any of your ban lists.",
+    "After a user joins a room (not a rejoin) a coolDownTime starts. \
+     If in this time media content or something matching the regex is send, \
+     this user get be banned for spam. This does not publish the ban to any of your ban lists.",
   capabilityInterfaces: {
     userConsequences: "UserConsequences",
     eventConsequences: "EventConsequences",
