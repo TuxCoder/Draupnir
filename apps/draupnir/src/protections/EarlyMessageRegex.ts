@@ -222,7 +222,7 @@ describeProtection<
   name: "EarlyMessageRegexProtection",
   description:
     "After a user joins a room (not a rejoin) a coolDownTime starts. \
-     If in this time media content or something matching the regex is send, \
+     If in this time media content or something matching the regex (case insensitive) is send, \
      this user get be banned for spam. This does not publish the ban to any of your ban lists.",
   capabilityInterfaces: {
     userConsequences: "UserConsequences",

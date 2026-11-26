@@ -136,7 +136,7 @@ describeProtection<
 >({
   name: "NewJoinerRegexProtection",
   description: `This protection is mean to be used against havy spam / abuse from a lot of accounts.
-    It allows to filter users by regex patters to filter them out in a more fine granulate way.
+    It allows to filter users by regex (case insensitive) patters to filter them out in a more fine granulate way.
     Configuration can be done life by adding an regex to \`allowList\` or \`banList\`.
     The allowList is always checked first and has priority.
     Will not ban existing users from those servers, and unbanning users will allow them to join normally.
