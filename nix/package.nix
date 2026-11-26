@@ -13,7 +13,6 @@
   cctools,
   nixosTests,
   nix-update-script,
-  fetchpatch2,
 }:
 let
   nodeSources = srcOnly nodejs_26;
@@ -21,9 +20,14 @@ in
 
 buildNpmPackage (finalAttrs: {
   pname = "draupnir";
-  version = "3.1.0";
+  version = "3.2.0";
 
-  src = ../.;
+  src = fetchFromGitHub {
+    owner = "the-draupnir-project";
+    repo = "Draupnir";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-OcP7Zf6HgoUQksKUyg2GM6ztLkLNylJW3o6ZVpQrgWQ=";
+  };
 
   nativeBuildInputs = [
     makeBinaryWrapper
@@ -32,7 +36,9 @@ buildNpmPackage (finalAttrs: {
   ]
   ++ lib.optional stdenv.hostPlatform.isDarwin cctools.libtool;
 
-  npmDepsHash = "sha256-7WAfSFfPQJ9d/U9hk5wypasSoU2JwkoCq/nKAnzFf1o=";
+  npmDepsHash = "sha256-pn8oyi0mx8N/NmBUaQqArNzOVOMilf0lp9gNbNKROI0=";
+
+  npmFlags = [ "--ignore-scripts" ];
 
   preBuild = ''
     # install proper version and branch info
